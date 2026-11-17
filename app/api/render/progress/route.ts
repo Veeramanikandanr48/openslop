@@ -2,12 +2,19 @@ import { getRenderProgress } from "@remotion/lambda/client";
 import { NextResponse } from "next/server";
 import { createSessionRouteHandler } from "@/lib/api/route-handler";
 import { getFunctionName, REGION } from "@/lib/render/lambda-config";
+import { isLocalMode } from "@/lib/local-mode";
 import { RenderHandle, type RenderProgress } from "@/lib/render/render-api";
 
 export const POST = createSessionRouteHandler({
 	schema: RenderHandle,
 	label: "render/progress",
 	handle: async ({ input }) => {
+		if (isLocalMode()) {
+			const { localRenderProgress } = await import("@/lib/render/local-render");
+			return NextResponse.json<RenderProgress>(
+				localRenderProgress(input.renderId),
+			);
+		}
 		const progress = await getRenderProgress({
 			renderId: input.renderId,
 			bucketName: input.bucketName,

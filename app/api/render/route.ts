@@ -6,6 +6,7 @@ import {
 	getSiteName,
 	REGION,
 } from "@/lib/render/lambda-config";
+import { isLocalMode } from "@/lib/local-mode";
 import { RenderRequest, type RenderHandle } from "@/lib/render/render-api";
 import { renderScale } from "@/lib/render/resolutions";
 import { COMPOSITION_ID } from "@/lib/render/types";
@@ -14,6 +15,10 @@ export const POST = createSessionRouteHandler({
 	schema: RenderRequest,
 	label: "render",
 	handle: async ({ input }) => {
+		if (isLocalMode()) {
+			const { startLocalRender } = await import("@/lib/render/local-render");
+			return NextResponse.json<RenderHandle>(startLocalRender(input));
+		}
 		const { renderId, bucketName } = await renderMediaOnLambda({
 			codec: "h264",
 			region: REGION,
